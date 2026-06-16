@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Key D3.js Features — Patient Timeline</title>
+<style>
+  :root{
+    --ink:#1b2a4a;--paper:#fafbfd;--line:#9db0cc;--note:#5b6b85;
+    --c-scale:#0072B2;--c-axis:#009E73;--c-data:#E69F00;
+    --c-sym:#d1495b;--c-interact:#aa4499;--c-render:#444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    font-family:"Helvetica Neue",Arial,"PingFang TC",sans-serif;
+    color:var(--ink);
+    width:760px;
+    padding:24px 28px 24px;
+  }
+
+  /* ── Header ── */
+  .hdr{border-bottom:2.5px solid var(--ink);padding-bottom:8px;margin-bottom:14px;}
+  .hdr .tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.06em;
+    color:#fff;background:var(--ink);padding:2px 7px;border-radius:2px;margin-bottom:5px;}
+  .hdr .title{font-size:14px;font-weight:800;color:var(--ink);line-height:1.3;}
+  .hdr .sub{font-size:9px;color:var(--note);margin-top:2px;}
+  .hdr .sub code{font-family:monospace;font-size:8.5px;
+    background:#e8edf5;padding:1px 4px;border-radius:2px;color:var(--ink);}
+
+  /* ── Table ── */
+  table{width:100%;border-collapse:collapse;font-size:9px;}
+  col.feat{width:30%;}
+  col.desc{width:70%;}
+
+  thead th{
+    background:var(--ink);color:#fff;
+    font-size:8.5px;font-weight:700;letter-spacing:.04em;
+    padding:5px 8px;text-align:left;
+  }
+
+  /* category sub-header rows */
+  tr.cat td{
+    padding:5px 8px 3px;
+    font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:#fff;border-top:1px solid #fff;
+  }
+  tr.cat.scale td {background:var(--c-scale);}
+  tr.cat.axis  td {background:var(--c-axis);}
+  tr.cat.data  td {background:var(--c-data);}
+  tr.cat.sym   td {background:var(--c-sym);}
+  tr.cat.inter td {background:var(--c-interact);}
+  tr.cat.render td{background:var(--c-render);}
+
+  /* item rows */
+  tr.item{border-bottom:1px solid #dde4ee;}
+  tr.item:last-child{border-bottom:none;}
+  tr.item td{padding:5px 8px;vertical-align:top;}
+  tr.item:nth-child(even) td{background:#f3f6fb;}
+  tr.item:nth-child(odd)  td{background:#fff;}
+
+  td.feat{font-family:monospace;font-size:9px;color:var(--ink);font-weight:700;line-height:1.4;}
+  td.feat .plus{font-size:8px;color:var(--note);font-family:monospace;display:block;font-weight:400;}
+  td.desc{font-size:9px;color:var(--note);line-height:1.5;}
+  td.desc b{color:var(--ink);}
+  td.desc code{font-family:monospace;font-size:8px;
+    background:#e8edf5;padding:1px 3px;border-radius:2px;color:var(--ink);}
+  td.fig {text-align:center;vertical-align:middle;}
+
+  /* figure badges */
+  .badge{display:inline-block;font-size:7.5px;font-weight:700;
+    padding:2px 5px;border-radius:3px;white-space:nowrap;}
+  .badge.both{background:#e8edf5;color:var(--ink);}
+  .badge.tl  {background:#d4eaf7;color:#0060a0;}
+  .badge.po  {background:#e4f0f6;color:#006090;}
+
+  /* legend */
+  .legend{margin-top:10px;display:flex;gap:14px;font-size:8px;color:var(--note);}
+  .legend .badge{font-size:7.5px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="tag">4 · KEY D3.js FEATURES</div>
+  <div class="title">D3.js Functions Used</div>
+</div>
+
+<table>
+  <colgroup>
+    <col class="feat"><col class="desc">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Function / API</th>
+      <th>What it does in this project</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- SCALES -->
+    <tr class="cat scale"><td colspan="3">Scales</td></tr>
+
+    <tr class="item">
+      <td class="feat">d3.scaleLinear()</td>
+      <td class="desc">Maps <b>Study Day → pixel x-position</b>. Domain is updated on every zoom event via <code>rescaleX()</code> to implement pan and zoom.</td>
+    </tr>
+    <tr class="item">
+      <td class="feat">d3.scaleBand()</td>
+      <td class="desc">Distributes <b>patient rows evenly on the y-axis</b> with configurable padding. <code>bandwidth()</code> gives each row's height for sizing event markers.</td>
+    </tr>
+    <tr class="item">
+      <td class="feat">d3.scaleOrdinal()</td>
+      <td class="desc">Assigns <b>Okabe-Ito colors</b> to treatment arms (A / B) and AE grades (1–4). Colorblind-friendly by construction.</td>
+    </tr>
+
+    <!-- AXES -->
+    <tr class="cat axis"><td colspan="3">Axes</td></tr>
+
+    <tr class="item">
+      <td class="feat">d3.axisBottom()
+        <span class="plus">d3.axisTop()</span>
+      </td>
+      <td class="desc">Renders bottom <b>Study Day</b> axis and top <b>calendar date</b> axis. Custom <code>tickValues</code> always pins Day 1 and suppresses the spurious Day 0 D3 would otherwise generate. Top axis date is computed independently per patient from their first-dose date.</td>
+    </tr>
+
+    <!-- DATA -->
+    <tr class="cat data"><td colspan="3">Data Processing</td></tr>
+
+    <tr class="item">
+      <td class="feat">d3.groups()</td>
+      <td class="desc">Splits the <b>flat JSON array</b> (all event types, all patients) into per-patient sub-arrays. The render loop iterates once per group, drawing each patient's layers in isolation.</td>
+    </tr>
+    <tr class="item">
+      <td class="feat">d3.timeParse()
+        <span class="plus">d3.timeFormat()</span>
+      </td>
+      <td class="desc"><code>timeParse("%d%b%Y")</code> converts <b>SAS-style date strings</b> (e.g. <code>"01JUN2024"</code>) into JS <code>Date</code> objects. <code>timeFormat</code> converts them back for the top axis labels.</td>
+    </tr>
+    <tr class="item">
+      <td class="feat">.data().join()</td>
+      <td class="desc">D3's <b>enter / update / exit</b> binding pattern. Each event layer (EX bars, LB diamonds, AE triangles, PD lines, OS lines) is rendered with one <code>.join()</code> call. Re-runs cleanly when r2d3 re-renders on resize.</td>
+    </tr>
+
+    <!-- SYMBOLS -->
+    <tr class="cat sym"><td colspan="3">Symbols</td></tr>
+
+    <tr class="item">
+      <td class="feat">d3.symbol()
+        <span class="plus">symbolTriangle · symbolDiamond</span>
+      </td>
+      <td class="desc">Generates SVG <code>&lt;path&gt;</code> strings for <b>AE markers</b> (▲ triangle, size scales with grade 1–4) and <b>Lab CS markers</b> (♦ diamond). No custom SVG path math needed.</td>
+    </tr>
+
+    <!-- INTERACTION -->
+    <tr class="cat inter"><td colspan="3">Interaction (Interactive Timeline only)</td></tr>
+
+    <tr class="item">
+      <td class="feat">d3.zoom()
+        <span class="plus">transform.rescaleX()</span>
+      </td>
+      <td class="desc">Captures <b>scroll-wheel and trackpad pinch</b> gestures. On each zoom event, <code>rescaleX(xScale)</code> returns a new scale with the updated domain — all axes and markers re-render against the new scale. Powers ★2 Semantic Zoom.</td>
+    </tr>
+    <tr class="item">
+      <td class="feat">d3.zoomTransform()</td>
+      <td class="desc">Reads the <b>current zoom level k</b> at any moment (e.g. on hover). Used to decide whether to show Grade 1–2 AE labels: visible only when k ≥ 3.</td>
+    </tr>
+
+    <!-- RENDERING -->
+    <tr class="cat render"><td colspan="3">Rendering</td></tr>
+
+    <tr class="item">
+      <td class="feat">SVG clipPath</td>
+      <td class="desc">A rectangular <b>clip mask</b> attached to the plot area. Prevents event markers from bleeding outside panel boundaries when panning or zooming. Uses a random suffix on the ID to avoid collision on r2d3 re-render.</td>
+    </tr>
+    <tr class="item">
+      <td class="feat">selection.attr("opacity")</td>
+      <td class="desc">The single mechanism behind three features: <b>★2</b> fades Grade 1–2 at low zoom; <b>★3</b> dims all layers except the hovered patient to 8%; <b>★4</b> dims deselected event-class layers. No CSS transitions — direct attribute set for instant response.</td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+</body>
+</html>
